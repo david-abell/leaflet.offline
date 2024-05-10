@@ -17,14 +17,14 @@ import {
 } from './TileManager';
 
 export interface TileLayerOfflineOptions extends TileLayerOptions {
-  autosave?: boolean;
+  autosave: boolean;
 }
 
 export class TileLayerOffline extends TileLayer {
   _url!: string;
 
   // @ts-expect-error typescript doesn't know this is initialized
-  options: TileLayerOfflineOptions;
+  options: Partial<TileLayerOfflineOptions>;
 
   createTile(coords: Coords, done: DoneCallback): HTMLElement {
     const tile = document.createElement('img');
@@ -132,7 +132,7 @@ TileLayerOffline.prototype.options = Util.extend(
 
 export function tileLayerOffline(
   url: string,
-  options: TileLayerOfflineOptions,
+  options: Partial<TileLayerOfflineOptions>,
 ) {
   return new TileLayerOffline(url, options);
 }
