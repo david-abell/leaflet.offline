@@ -9,14 +9,22 @@ import {
 } from 'leaflet';
 import {
   getTileUrl,
-  getBlobByKey,
   TileInfo,
   getTilePoints,
   getTileImageSource,
+  downloadTile,
+  saveTile,
 } from './TileManager';
+
+export interface TileLayerOfflineOptions extends TileLayerOptions {
+  autosave?: boolean;
+}
 
 export class TileLayerOffline extends TileLayer {
   _url!: string;
+
+  // @ts-expect-error typescript doesn't know this is initialized
+  options: TileLayerOfflineOptions;
 
   createTile(coords: Coords, done: DoneCallback): HTMLElement {
     const tile = document.createElement('img');
@@ -33,10 +41,33 @@ export class TileLayerOffline extends TileLayer {
 
     tile.setAttribute('role', 'presentation');
 
-    getTileImageSource(
-      this._getStorageKey(coords),
-      this.getTileUrl(coords),
-    ).then((src) => (tile.src = src));
+    getTileImageSource(this._getStorageKey(coords), this.getTileUrl(coords))
+      .then(async (src) => {
+        if (this.options.autosave && !src.startsWith('blob:')) {
+          const blob = await downloadTile(src);
+          const dataurl = URL.createObjectURL(blob);
+          tile.src = dataurl;
+          // Call done after src has been set so we don't wait for save to complete before starting render.
+          done(undefined, tile);
+
+          const { x, y, z } = coords;
+          const url = this.getTileUrl(coords);
+          const tileInfo = {
+            key: url,
+            url,
+            x,
+            y,
+            z,
+            urlTemplate: this._url,
+            createdAt: Date.now(),
+          };
+          await saveTile(tileInfo, blob);
+        } else {
+          tile.src = src;
+          done(undefined, tile);
+        }
+      })
+      .catch((e) => done(e, tile));
 
     return tile;
   }
@@ -91,7 +122,18 @@ export class TileLayerOffline extends TileLayer {
   }
 }
 
-export function tileLayerOffline(url: string, options: TileLayerOptions) {
+TileLayerOffline.prototype.options = Util.extend(
+  {},
+  (TileLayer as any).prototype.options,
+  {
+    autosave: false,
+  } satisfies TileLayerOfflineOptions,
+);
+
+export function tileLayerOffline(
+  url: string,
+  options: TileLayerOfflineOptions,
+) {
   return new TileLayerOffline(url, options);
 }
 
