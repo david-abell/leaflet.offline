@@ -1,5 +1,32 @@
-import { Bounds, Point } from 'leaflet';
-import { TileLayerOffline } from '../src/TileLayerOffline';
+import { Bounds, Point, Map as LMap } from 'leaflet';
+import { TileLayerOffline, tileLayerOffline } from '../src/TileLayerOffline';
+
+// Leaflet test helper from
+// https://github.com/Leaflet/Leaflet/blob/f46286311a7e3bc691034a349edf765e8b14f71a/spec/suites/SpecHelper.js
+function createContainer(width = '400px', height = '400px') {
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.top = '0px';
+  container.style.left = '0px';
+  container.style.height = height;
+  container.style.width = width;
+  container.style.opacity = '0.4';
+  document.body.appendChild(container);
+
+  return container;
+}
+
+// Leaflet test helper from
+// https://github.com/Leaflet/Leaflet/blob/f46286311a7e3bc691034a349edf765e8b14f71a/spec/suites/layer/tile/TileLayerSpec.js#L181
+function eachImg(layer: any, callback: any) {
+  const imgtags = layer._container.children[0].children;
+  // eslint-disable-next-line no-restricted-syntax
+  for (const i in imgtags) {
+    if (imgtags[i].tagName === 'IMG') {
+      callback(imgtags[i]);
+    }
+  }
+}
 
 describe('TileLayer.Offline', () => {
   it('createTile', () => {
@@ -131,5 +158,29 @@ describe('TileLayer.Offline', () => {
       keys,
       'https://api.tiles.mapbox.com/v4/mapbox.streets/16/33677/21651.png?access_token=xyz',
     );
+  });
+
+  it('should autosave tile and', (done) => {
+    const container = createContainer();
+    const map = new LMap(container);
+    container.style.width = '100px';
+    container.style.height = '100px';
+    map.setView([33677, 21651], 16);
+
+    const layer = tileLayerOffline(
+      'http://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        autosave: true,
+      },
+    ).addTo(map);
+
+    layer.on('load', () => {
+      if (!layer.isLoading()) {
+        eachImg(layer, (img: any) => {
+          expect(img.src).to.contain('blob:');
+        });
+        done();
+      }
+    });
   });
 });
