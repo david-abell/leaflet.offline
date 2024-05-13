@@ -11,7 +11,6 @@ import {
   getTileUrl,
   TileInfo,
   getTilePoints,
-  getTileImageSource,
   downloadTile,
   saveTile,
   getStoredTile,
@@ -46,50 +45,31 @@ export class TileLayerOffline extends TileLayer {
     const tileKey = this._getStorageKey(coords);
 
     getStoredTile(tileKey).then(async (tileInfo) => {
+      const minCreatedAt = new Date().setDate(-30);
+
+      if (tileInfo && tileInfo.createdAt < minCreatedAt) {
+        await removeTile(tileKey).catch(() => {});
+      } else if (tileInfo) {
+        tile.src = URL.createObjectURL(tileInfo.blob);
+        done(undefined, tile);
+        return;
+      }
+
       if (this.options.autosave) {
-        const minCreatedAt = new Date().setDate(-30);
         try {
-          if (tileInfo && tileInfo.createdAt > minCreatedAt) {
-            tile.src = URL.createObjectURL(tileInfo.blob);
-          } else if (tileInfo) {
-            done(undefined, tile);
-            await removeTile(tileKey);
-          } else {
-            const blob = await downloadTile(this.getTileUrl(coords));
-            tile.src = URL.createObjectURL(blob);
-          }
+          const blob = await downloadTile(this.getTileUrl(coords));
+          tile.src = URL.createObjectURL(blob);
+          done(undefined, tile);
+          await saveTile(getTileInfo(coords, this._url), blob);
         } catch (e) {
           tile.src = this.getTileUrl(coords);
           done(undefined, tile);
         }
-      }
-
-      if (!tileInfo || !this.options.autosave) {
+      } else {
         tile.src = this.getTileUrl(coords);
         done(undefined, tile);
       }
     });
-
-    getTileImageSource(this._getStorageKey(coords), this.getTileUrl(coords))
-      .then(async (src) => {
-        if (this.options.autosave && !src.startsWith('blob:')) {
-          const blob = await downloadTile(src);
-          const dataurl = URL.createObjectURL(blob);
-          tile.src = dataurl;
-          // Call done after src has been set so we don't wait for save to complete before starting render.
-          done(undefined, tile);
-
-          const tileInfo = getTileInfo(coords, this._url);
-          await saveTile(tileInfo, blob);
-        } else {
-          tile.src = src;
-          done(undefined, tile);
-        }
-      })
-      .catch(() => {
-        tile.src = this.getTileUrl(coords);
-        done(undefined, tile);
-      });
 
     return tile;
   }
