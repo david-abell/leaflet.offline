@@ -6,7 +6,7 @@
  *
  */
 
-import { Bounds, Browser, CRS, Point, Util } from 'leaflet';
+import { Bounds, Browser, CRS, Coords, Point, Util } from 'leaflet';
 import { openDB, deleteDB, IDBPDatabase } from 'idb';
 import { FeatureCollection, Polygon } from 'geojson';
 
@@ -236,4 +236,26 @@ export async function getStoredTile(key: string) {
   const db = await openTilesDataBase();
   const result: StoredTile | undefined = await db.get(tileStoreName, key);
   return result;
+}
+
+/**
+ * @example
+ * ```js
+ * import { getTileInfo } from 'leaflet.offline'
+ * getTileInfo({ x, y, z }, 'https://tile.openstreetmap.org/{z}/{x}/{y}.png')
+ * ```
+ */
+export function getTileInfo(coords: Coords, urlTemplate: string) {
+  const { x, y, z } = coords;
+  const url = getTileUrl(urlTemplate, coords);
+  const tileInfo = {
+    key: url,
+    url,
+    x,
+    y,
+    z,
+    urlTemplate,
+    createdAt: Date.now(),
+  };
+  return tileInfo;
 }

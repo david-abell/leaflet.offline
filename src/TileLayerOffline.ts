@@ -16,6 +16,7 @@ import {
   saveTile,
   getStoredTile,
   removeTile,
+  getTileInfo,
 } from './TileManager';
 
 export interface TileLayerOfflineOptions extends TileLayerOptions {
@@ -78,17 +79,7 @@ export class TileLayerOffline extends TileLayer {
           // Call done after src has been set so we don't wait for save to complete before starting render.
           done(undefined, tile);
 
-          const { x, y, z } = coords;
-          const url = this.getTileUrl(coords);
-          const tileInfo = {
-            key: url,
-            url,
-            x,
-            y,
-            z,
-            urlTemplate: this._url,
-            createdAt: Date.now(),
-          };
+          const tileInfo = getTileInfo(coords, this._url);
           await saveTile(tileInfo, blob);
         } else {
           tile.src = src;
