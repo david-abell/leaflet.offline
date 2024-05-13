@@ -20,13 +20,14 @@ import {
 
 export interface TileLayerOfflineOptions extends TileLayerOptions {
   autosave: boolean;
+  maxCacheDays: number;
 }
 
 export class TileLayerOffline extends TileLayer {
   _url!: string;
 
   // @ts-expect-error Property has no initializer: Options are initialized below by extending prototype.
-  options: Partial<TileLayerOfflineOptions>;
+  options: TileLayerOfflineOptions;
 
   createTile(coords: Coords, done: DoneCallback): HTMLImageElement {
     const tile = document.createElement('img');
@@ -45,8 +46,9 @@ export class TileLayerOffline extends TileLayer {
     const tileKey = this._getStorageKey(coords);
 
     getStoredTile(tileKey).then(async (tileInfo) => {
-      const minCreatedAt = new Date().setDate(-30);
-
+      const minCreatedAt = new Date().setDate(
+        -Math.abs(this.options.maxCacheDays),
+      );
       if (tileInfo && tileInfo.createdAt < minCreatedAt) {
         await removeTile(tileKey).catch(() => {});
       } else if (tileInfo) {
@@ -129,6 +131,7 @@ TileLayerOffline.prototype.options = Util.extend(
   (TileLayer as any).prototype.options,
   {
     autosave: false,
+    maxCacheDays: 7,
   } satisfies TileLayerOfflineOptions,
 );
 
