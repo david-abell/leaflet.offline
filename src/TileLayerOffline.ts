@@ -26,7 +26,7 @@ export class TileLayerOffline extends TileLayer {
   // @ts-expect-error Property has no initializer: Options are initialized below by extending prototype.
   options: Partial<TileLayerOfflineOptions>;
 
-  createTile(coords: Coords, done: DoneCallback): HTMLElement {
+  createTile(coords: Coords, done: DoneCallback): HTMLImageElement {
     const tile = document.createElement('img');
 
     DomEvent.on(tile, 'load', Util.bind(this._tileOnLoad, this, done, tile));
