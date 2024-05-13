@@ -14,6 +14,8 @@ import {
   getTileImageSource,
   downloadTile,
   saveTile,
+  getStoredTile,
+  removeTile,
 } from './TileManager';
 
 export interface TileLayerOfflineOptions extends TileLayerOptions {
@@ -40,6 +42,32 @@ export class TileLayerOffline extends TileLayer {
     tile.alt = '';
 
     tile.setAttribute('role', 'presentation');
+    const tileKey = this._getStorageKey(coords);
+
+    getStoredTile(tileKey).then(async (tileInfo) => {
+      if (this.options.autosave) {
+        const minCreatedAt = new Date().setDate(-30);
+        try {
+          if (tileInfo && tileInfo.createdAt > minCreatedAt) {
+            tile.src = URL.createObjectURL(tileInfo.blob);
+          } else if (tileInfo) {
+            done(undefined, tile);
+            await removeTile(tileKey);
+          } else {
+            const blob = await downloadTile(this.getTileUrl(coords));
+            tile.src = URL.createObjectURL(blob);
+          }
+        } catch (e) {
+          tile.src = this.getTileUrl(coords);
+          done(undefined, tile);
+        }
+      }
+
+      if (!tileInfo || !this.options.autosave) {
+        tile.src = this.getTileUrl(coords);
+        done(undefined, tile);
+      }
+    });
 
     getTileImageSource(this._getStorageKey(coords), this.getTileUrl(coords))
       .then(async (src) => {
