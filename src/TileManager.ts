@@ -224,3 +224,16 @@ export async function getTileImageSource(key: string, url: string) {
   const blob = await getBlobByKey(key);
   return URL.createObjectURL(blob);
 }
+
+/**
+ * @example
+ * ```js
+ * import { getStoredTile } from 'leaflet.offline'
+ * getStoredTile('https://tile.openstreetmap.org/{z}/{x}/{y}.png')
+ * ```
+ */
+export async function getStoredTile(key: string) {
+  const db = await openTilesDataBase();
+  const result: StoredTile | undefined = await db.get(tileStoreName, key);
+  return result;
+}
