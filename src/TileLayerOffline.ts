@@ -67,7 +67,10 @@ export class TileLayerOffline extends TileLayer {
           done(undefined, tile);
         }
       })
-      .catch((e) => done(e, tile));
+      .catch(() => {
+        tile.src = this.getTileUrl(coords);
+        done(undefined, tile);
+      });
 
     return tile;
   }
