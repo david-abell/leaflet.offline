@@ -23,7 +23,7 @@ export interface TileLayerOfflineOptions extends TileLayerOptions {
 export class TileLayerOffline extends TileLayer {
   _url!: string;
 
-  // @ts-expect-error typescript doesn't know this is initialized
+  // @ts-expect-error Property has no initializer: Options are initialized below by extending prototype.
   options: Partial<TileLayerOfflineOptions>;
 
   createTile(coords: Coords, done: DoneCallback): HTMLElement {
