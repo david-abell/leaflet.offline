@@ -19,8 +19,8 @@ import {
 } from './TileManager';
 
 export interface TileLayerOfflineOptions extends TileLayerOptions {
-  autosave: boolean;
-  maxCacheDays: number;
+  autosave: boolean; // default false
+  maxCacheDays: number; // default 7
 }
 
 export class TileLayerOffline extends TileLayer {
