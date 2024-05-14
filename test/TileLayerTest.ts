@@ -195,7 +195,7 @@ describe('TileLayer.Offline', () => {
     });
   });
 
-  it('uses cached tile', async () => {
+  it('createTile uses cached tile', async () => {
     const layer = tileLayerOffline(
       'http://tile.openstreetmap.org/{z}/{x}/{y}.png',
       {
@@ -220,6 +220,39 @@ describe('TileLayer.Offline', () => {
         assert.equal(stored?.createdAt, agedTestTileInfo.createdAt);
         resolve(null);
       }, 20);
+    });
+  });
+
+  // eslint-disable-next-line prefer-arrow-callback
+  it('createTile removes expired tile and creates new record', async () => {
+    const layer = tileLayerOffline(
+      'http://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        autosave: true,
+        maxCacheDays: 10,
+      },
+    );
+
+    const agedTestTileInfo = {
+      ...testTileInfo,
+      createdAt: new Date().setDate(-12),
+    };
+
+    const testTileRecord = { agedTestTileInfo, blob: new Blob() };
+    await truncate();
+    await saveTile(agedTestTileInfo, testTileRecord.blob);
+
+    const { x, y, z } = agedTestTileInfo;
+
+    layer.createTile({ x, y, z } as Coords, () => {});
+
+    await new Promise((resolve) => {
+      setTimeout(async () => {
+        const stored = await getStoredTile(testTileInfo.key);
+        assert.isNumber(stored?.createdAt);
+        expect(stored?.createdAt).to.be.greaterThan(agedTestTileInfo.createdAt);
+        resolve(null);
+      }, 200);
     });
   });
 });
