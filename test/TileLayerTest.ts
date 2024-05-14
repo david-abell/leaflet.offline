@@ -160,7 +160,7 @@ describe('TileLayer.Offline', () => {
     );
   });
 
-  it('should autosave tile and', (done) => {
+  it('saves tiles and renders img tags with blob src', (done) => {
     const container = createContainer();
     const map = new LMap(container);
     container.style.width = '100px';
