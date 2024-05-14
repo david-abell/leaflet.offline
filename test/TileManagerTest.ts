@@ -138,4 +138,11 @@ describe('manage tile storage', () => {
     assert.isObject(result);
     assert.deepEqual(StoredTile, result);
   });
+
+  it('get tile info returns undefined if tile key does not exist', async () => {
+    const StoredTile = { blob: new Blob(), ...testTileInfo };
+    await saveTile(testTileInfo, StoredTile.blob);
+    const result = await getStoredTile('bad key');
+    assert.notExists(result);
+  });
 });
