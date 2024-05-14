@@ -49,12 +49,14 @@ export class TileLayerOffline extends TileLayer {
       const minCreatedAt = new Date().setDate(
         -Math.abs(this.options.maxCacheDays),
       );
-      if (tileInfo && tileInfo.createdAt < minCreatedAt) {
-        await removeTile(tileKey).catch(() => {});
-      } else if (tileInfo) {
-        tile.src = URL.createObjectURL(tileInfo.blob);
-        done(undefined, tile);
-        return;
+      if (tileInfo) {
+        if (tileInfo.createdAt < minCreatedAt) {
+          await removeTile(tileKey).catch(() => {});
+        } else {
+          tile.src = URL.createObjectURL(tileInfo.blob);
+          done(undefined, tile);
+          return;
+        }
       }
 
       if (this.options.autosave) {
