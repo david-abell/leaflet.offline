@@ -5,6 +5,7 @@ import {
   downloadTile,
   getStorageInfo,
   getStorageLength,
+  getStoredTile,
   getStoredTilesAsJson,
   getTileImageSource,
   getTilePoints,
@@ -128,5 +129,13 @@ describe('manage tile storage', () => {
     );
     assert.isString(result);
     assert.isTrue(result.includes('blob:'));
+  });
+
+  it('get tile info returns info object if tile key does exist', async () => {
+    const StoredTile = { blob: new Blob(), ...testTileInfo };
+    await saveTile(testTileInfo, StoredTile.blob);
+    const result = await getStoredTile(testTileInfo.key);
+    assert.isObject(result);
+    assert.deepEqual(StoredTile, result);
   });
 });
