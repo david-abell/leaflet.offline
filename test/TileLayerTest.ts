@@ -1,5 +1,6 @@
-import { Bounds, Point, Map as LMap } from 'leaflet';
+import { Bounds, Point, Map as LMap, Coords } from 'leaflet';
 import { TileLayerOffline, tileLayerOffline } from '../src/TileLayerOffline';
+import { getStoredTile, saveTile, truncate } from '../src/TileManager';
 
 // Leaflet test helper from
 // https://github.com/Leaflet/Leaflet/blob/f46286311a7e3bc691034a349edf765e8b14f71a/spec/suites/SpecHelper.js
@@ -27,6 +28,16 @@ function eachImg(layer: any, callback: any) {
     }
   }
 }
+
+const testTileInfo = {
+  key: 'http://tile.openstreetmap.org/16/42052/0.png',
+  url: 'http://tile.openstreetmap.org/16/42052/0.png',
+  x: 42052,
+  y: 0,
+  z: 16,
+  urlTemplate: 'http://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  createdAt: Date.now(),
+};
 
 describe('TileLayer.Offline', () => {
   it('createTile', () => {
@@ -181,6 +192,34 @@ describe('TileLayer.Offline', () => {
         });
         done();
       }
+    });
+  });
+
+  it('uses cached tile', async () => {
+    const layer = tileLayerOffline(
+      'http://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {
+        autosave: true,
+      },
+    );
+    const agedTestTileInfo = {
+      ...testTileInfo,
+      createdAt: new Date().setDate(-4),
+    };
+    const testTileRecord = { agedTestTileInfo, blob: new Blob() };
+    await truncate();
+    await saveTile(agedTestTileInfo, testTileRecord.blob);
+
+    const { x, y, z } = agedTestTileInfo;
+    layer.createTile({ x, y, z } as Coords, () => {});
+
+    await new Promise((resolve) => {
+      setTimeout(async () => {
+        const stored = await getStoredTile(testTileInfo.key);
+        assert.exists(stored);
+        assert.equal(stored?.createdAt, agedTestTileInfo.createdAt);
+        resolve(null);
+      }, 20);
     });
   });
 });
