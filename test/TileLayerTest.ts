@@ -174,8 +174,8 @@ describe('TileLayer.Offline', () => {
   it('saves tiles and renders img tags with blob src', (done) => {
     const container = createContainer();
     const map = new LMap(container);
-    container.style.width = '100px';
-    container.style.height = '100px';
+    container.style.width = '800px';
+    container.style.height = '600px';
     map.setView([33677, 21651], 16);
 
     const layer = tileLayerOffline(
@@ -187,21 +187,31 @@ describe('TileLayer.Offline', () => {
 
     layer.on('load', () => {
       if (!layer.isLoading()) {
+        let count = 0;
         eachImg(layer, (img: any) => {
+          count += 1;
           expect(img.src).to.contain('blob:');
         });
+        expect(count).to.equal(8);
         done();
       }
     });
   });
 
   it('createTile uses cached tile', async () => {
+    const container = createContainer();
+    const map = new LMap(container);
+    container.style.width = '100px';
+    container.style.height = '100px';
+    map.setView([33677, 21651], 16);
+
     const layer = tileLayerOffline(
       'http://tile.openstreetmap.org/{z}/{x}/{y}.png',
       {
         autosave: true,
       },
-    );
+    ).addTo(map);
+
     const agedTestTileInfo = {
       ...testTileInfo,
       createdAt: new Date().setDate(-4),
@@ -219,19 +229,24 @@ describe('TileLayer.Offline', () => {
         assert.exists(stored);
         assert.equal(stored?.createdAt, agedTestTileInfo.createdAt);
         resolve(null);
-      }, 20);
+      }, 100);
     });
   });
 
-  // eslint-disable-next-line prefer-arrow-callback
   it('createTile removes expired tile and creates new record', async () => {
+    const container = createContainer();
+    const map = new LMap(container);
+    container.style.width = '100px';
+    container.style.height = '100px';
+    map.setView([33677, 21651], 16);
+
     const layer = tileLayerOffline(
       'http://tile.openstreetmap.org/{z}/{x}/{y}.png',
       {
         autosave: true,
         maxCacheDays: 10,
       },
-    );
+    ).addTo(map);
 
     const agedTestTileInfo = {
       ...testTileInfo,
@@ -252,7 +267,7 @@ describe('TileLayer.Offline', () => {
         assert.isNumber(stored?.createdAt);
         expect(stored?.createdAt).to.be.greaterThan(agedTestTileInfo.createdAt);
         resolve(null);
-      }, 200);
+      }, 100);
     });
   });
 });
