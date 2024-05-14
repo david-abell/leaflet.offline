@@ -248,7 +248,7 @@ export async function getStoredTile(key: string) {
 export function getTileInfo(coords: Coords, urlTemplate: string) {
   const { x, y, z } = coords;
   const url = getTileUrl(urlTemplate, coords);
-  const tileInfo = {
+  const tileInfo: TileInfo = {
     key: url,
     url,
     x,
