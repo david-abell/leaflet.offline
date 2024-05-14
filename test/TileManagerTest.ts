@@ -131,7 +131,7 @@ describe('manage tile storage', () => {
     assert.isTrue(result.includes('blob:'));
   });
 
-  it('get tile info returns info object if tile key does exist', async () => {
+  it('get stored tile returns info object if tile key does exist', async () => {
     const StoredTile = { blob: new Blob(), ...testTileInfo };
     await saveTile(testTileInfo, StoredTile.blob);
     const result = await getStoredTile(testTileInfo.key);
@@ -139,7 +139,7 @@ describe('manage tile storage', () => {
     assert.deepEqual(StoredTile, result);
   });
 
-  it('get tile info returns undefined if tile key does not exist', async () => {
+  it('get stored tile returns undefined if tile key does not exist', async () => {
     const StoredTile = { blob: new Blob(), ...testTileInfo };
     await saveTile(testTileInfo, StoredTile.blob);
     const result = await getStoredTile('bad key');
